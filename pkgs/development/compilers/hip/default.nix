@@ -21,6 +21,7 @@
 , rocm-runtime
 , rocm-thunk
 , rocminfo
+, substituteAll
 , writeScript
 , writeText
 }:
@@ -28,14 +29,22 @@
 let
   hip = stdenv.mkDerivation rec {
     pname = "hip";
-    version = "5.2.1";
+    version = "5.3.0";
 
     src = fetchFromGitHub {
       owner = "ROCm-Developer-Tools";
       repo = "HIP";
       rev = "rocm-${version}";
-      hash = "sha256-aXI55bdhAuPUEdQZukKAdtLWA+8UIxjPJ4LTamR/ENk=";
+      hash = "sha256-UAodlVUiTU4n/EyvTIuQekTGh4izmBjKCRXOHXVKY4M=";
     };
+
+    patches = [
+      (substituteAll {
+        src = ./hip-config-paths.patch;
+        inherit llvm;
+        rocm_runtime = rocm-runtime;
+      })
+    ];
 
     # - fix bash paths
     # - fix path to rocm_agent_enumerator
@@ -93,20 +102,20 @@ let
       description = "C++ Heterogeneous-Compute Interface for Portability";
       homepage = "https://github.com/ROCm-Developer-Tools/HIP";
       license = licenses.mit;
-      maintainers = with maintainers; [ lovesegfault ];
+      maintainers = with maintainers; [ lovesegfault Flakebi ];
       platforms = platforms.linux;
     };
   };
 in
 stdenv.mkDerivation rec {
   pname = "hip";
-  version = "5.2.1";
+  version = "5.3.0";
 
   src = fetchFromGitHub {
     owner = "ROCm-Developer-Tools";
     repo = "hipamd";
     rev = "rocm-${version}";
-    hash = "sha256-YsvM+HjoBiukXAMCdE/dpQNMnpP6XRXDuxV1487rok0=";
+    hash = "sha256-gZGZiDP/HbdmzLQkG9Jq9lyMP9hoD6UzTMiX9cUmQNA=";
   };
 
   nativeBuildInputs = [ cmake python3 makeWrapper perl ];
@@ -120,6 +129,19 @@ stdenv.mkDerivation rec {
     rocm-thunk
     rocminfo
   ];
+
+  patches = [
+    (substituteAll {
+      src = ./hipamd-config-paths.patch;
+      inherit clang llvm hip;
+      rocm_runtime = rocm-runtime;
+    })
+  ];
+
+  prePatch = ''
+    sed -e 's,#!/bin/bash,#!${stdenv.shell},' \
+        -i src/hip_embed_pch.sh
+  '';
 
   preConfigure = ''
     export HIP_CLANG_PATH=${clang}/bin
@@ -172,7 +194,7 @@ stdenv.mkDerivation rec {
     description = "C++ Heterogeneous-Compute Interface for Portability";
     homepage = "https://github.com/ROCm-Developer-Tools/hipamd";
     license = licenses.mit;
-    maintainers = with maintainers; [ lovesegfault ];
+    maintainers = with maintainers; [ lovesegfault Flakebi ];
     platforms = platforms.linux;
   };
 }

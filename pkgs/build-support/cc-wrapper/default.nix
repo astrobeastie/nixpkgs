@@ -157,6 +157,8 @@ stdenv.mkDerivation {
         '(${concatStringsSep " " (map (pkg: "\"${pkg}\"") pkgs)}))
     '';
 
+    inherit expand-response-params;
+
     inherit nixSupport;
   };
 
@@ -249,19 +251,12 @@ stdenv.mkDerivation {
       wrap ${targetPrefix}gdc $wrapper $ccPath/${targetPrefix}gdc
     ''
 
-    + optionalString cc.langFortran or false (''
+    + optionalString cc.langFortran or false ''
       wrap ${targetPrefix}gfortran $wrapper $ccPath/${targetPrefix}gfortran
       ln -sv ${targetPrefix}gfortran $out/bin/${targetPrefix}g77
       ln -sv ${targetPrefix}gfortran $out/bin/${targetPrefix}f77
       export named_fc=${targetPrefix}gfortran
     ''
-    # Darwin aarch64 fortran compilations seem to fail otherwise, see:
-    # https://github.com/NixOS/nixpkgs/issues/140041
-    + (if (stdenvNoCC.isDarwin && stdenvNoCC.isAarch64) then ''
-      export fortran_hardening="pic strictoverflow relro bindnow"
-    '' else ''
-      export fortran_hardening="pic strictoverflow relro bindnow stackprotector"
-    ''))
 
     + optionalString cc.langJava or false ''
       wrap ${targetPrefix}gcj $wrapper $ccPath/${targetPrefix}gcj
@@ -279,7 +274,9 @@ stdenv.mkDerivation {
 
   setupHooks = [
     ../setup-hooks/role.bash
-  ] ++ lib.optional (cc.langC or true) ./setup-hook.sh
+  ] ++ lib.optional (cc.langC or true)
+        # Temporary hack; see https://github.com/NixOS/nixpkgs/pull/191724#issuecomment-1278602576
+        (if stdenv.isLinux then ./setup-hook.sh else ./setup-hook-nonlinux.sh)
     ++ lib.optional (cc.langFortran or false) ./fortran-hook.sh;
 
   postFixup =
@@ -494,6 +491,8 @@ stdenv.mkDerivation {
       hardening_unsupported_flags+=" format"
     '' + optionalString targetPlatform.isWasm ''
       hardening_unsupported_flags+=" stackprotector fortify pie pic"
+    '' + optionalString targetPlatform.isMicroBlaze ''
+      hardening_unsupported_flags+=" stackprotector"
     ''
 
     + optionalString (libc != null && targetPlatform.isAvr) ''
@@ -540,7 +539,6 @@ stdenv.mkDerivation {
         (name: value: "echo ${toString value} >> $out/nix-support/${name}")
         nixSupport);
 
-  inherit expand-response-params;
 
   # for substitution in utils.bash
   expandResponseParams = "${expand-response-params}/bin/expand-response-params";

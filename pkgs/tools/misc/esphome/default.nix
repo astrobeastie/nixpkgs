@@ -15,14 +15,14 @@ let
 in
 with python.pkgs; buildPythonApplication rec {
   pname = "esphome";
-  version = "2022.8.0";
+  version = "2022.10.1";
   format = "setuptools";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = "refs/tags/${version}";
-    hash = "sha256-lukK++CRpl7ucX9RuYa4qhHBbBY4oc/ijqGopeIaXPY=";
+    hash = "sha256-nMm3doRbszT0VX7CCRTqK0HD/D3YKPNqDKGHCce16Zc=";
   };
 
   postPatch = ''
@@ -55,6 +55,7 @@ with python.pkgs; buildPythonApplication rec {
     protobuf
     pyserial
     pyyaml
+    requests
     tornado
     tzdata
     tzlocal
@@ -91,6 +92,7 @@ with python.pkgs; buildPythonApplication rec {
 
   passthru = {
     dashboard = esphome-dashboard;
+    updateScript = callPackage ./update.nix {};
   };
 
   meta = with lib; {

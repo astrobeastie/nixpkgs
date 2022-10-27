@@ -1,9 +1,9 @@
 { branch ? "stable", callPackage, fetchurl, lib, stdenv }:
 let
   versions = if stdenv.isLinux then {
-    stable = "0.0.19";
-    ptb = "0.0.29";
-    canary = "0.0.136";
+    stable = "0.0.21";
+    ptb = "0.0.34";
+    canary = "0.0.140";
   } else {
     stable = "0.0.264";
     ptb = "0.0.59";
@@ -14,15 +14,15 @@ let
     x86_64-linux = {
       stable = fetchurl {
         url = "https://dl.discordapp.net/apps/linux/${version}/discord-${version}.tar.gz";
-        sha256 = "GfSyddbGF8WA6JmHo4tUM27cyHV5kRAyrEiZe1jbA5A=";
+        sha256 = "KDKUssPRrs/D10s5GhJ23hctatQmyqd27xS9nU7iNaM=";
       };
       ptb = fetchurl {
         url = "https://dl-ptb.discordapp.net/apps/linux/${version}/discord-ptb-${version}.tar.gz";
-        sha256 = "d78NnQZ3MkLje8mHrI6noH2iD2oEvSJ3cDnsmzQsUYc=";
+        sha256 = "CD6dLoBnlvhpwEFfLI9OqjhviZPj3xNDyPK9qBJUqck=";
       };
       canary = fetchurl {
         url = "https://dl-canary.discordapp.net/apps/linux/${version}/discord-canary-${version}.tar.gz";
-        sha256 = "sha256-OrGg4jXziesHBhQORxREN/wq776RgNGaTyjJNV4pSAU=";
+        sha256 = "sha256-AEbjkAMeOJ48RVgbVj35Rp26klCsCsDCX+VD5u1xCM0=";
       };
     };
     aarch64-darwin = {
@@ -53,7 +53,7 @@ let
     downloadPage = "https://discordapp.com/download";
     sourceProvenance = with sourceTypes; [ binaryNativeCode ];
     license = licenses.unfree;
-    maintainers = with maintainers; [ MP2E devins2518 ];
+    maintainers = with maintainers; [ MP2E devins2518 artturin infinidoge ];
     platforms = [ "x86_64-linux" "x86_64-darwin" ]
       ++ lib.optionals (branch != "stable") [ "aarch64-darwin" ];
   };
@@ -69,7 +69,7 @@ let
       (_: value:
         callPackage package (value
           // {
-          inherit src version openasar;
+          inherit src version openasar branch;
           meta = meta // { mainProgram = value.binaryName; };
         }))
       {
@@ -80,12 +80,12 @@ let
         };
         ptb = rec {
           pname = "discord-ptb";
-          binaryName = "DiscordPTB";
+          binaryName = if stdenv.isLinux then "DiscordPTB" else desktopName;
           desktopName = "Discord PTB";
         };
         canary = rec {
           pname = "discord-canary";
-          binaryName = "DiscordCanary";
+          binaryName = if stdenv.isLinux then "DiscordCanary" else desktopName;
           desktopName = "Discord Canary";
         };
       }

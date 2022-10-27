@@ -79,7 +79,7 @@ in {
   ];
 
   options.services.nextcloud = {
-    enable = mkEnableOption "nextcloud";
+    enable = mkEnableOption (lib.mdDoc "nextcloud");
     hostName = mkOption {
       type = types.str;
       description = lib.mdDoc "FQDN for the nextcloud instance.";
@@ -156,7 +156,7 @@ in {
     package = mkOption {
       type = types.package;
       description = lib.mdDoc "Which package to use for the Nextcloud instance.";
-      relatedPackages = [ "nextcloud23" "nextcloud24" ];
+      relatedPackages = [ "nextcloud24" "nextcloud25" ];
     };
     phpPackage = mkOption {
       type = types.package;
@@ -371,31 +371,31 @@ in {
         default = null;
         type = types.nullOr types.str;
         example = "DE";
-        description = ''
-          <warning>
-           <para>This option exists since Nextcloud 21! If older versions are used,
-            this will throw an eval-error!</para>
-          </warning>
+        description = lib.mdDoc ''
+          ::: {.warning}
+          This option exists since Nextcloud 21! If older versions are used,
+          this will throw an eval-error!
+          :::
 
-          <link xlink:href="https://www.iso.org/iso-3166-country-codes.html">ISO 3611-1</link>
+          [ISO 3611-1](https://www.iso.org/iso-3166-country-codes.html)
           country codes for automatic phone-number detection without a country code.
 
-          With e.g. <literal>DE</literal> set, the <literal>+49</literal> can be omitted for
+          With e.g. `DE` set, the `+49` can be omitted for
           phone-numbers.
         '';
       };
 
       objectstore = {
         s3 = {
-          enable = mkEnableOption ''
+          enable = mkEnableOption (lib.mdDoc ''
             S3 object storage as primary storage.
 
             This mounts a bucket on an Amazon S3 object storage or compatible
             implementation into the virtual filesystem.
 
             Further details about this feature can be found in the
-            <link xlink:href="https://docs.nextcloud.com/server/22/admin_manual/configuration_files/primary_storage.html">upstream documentation</link>.
-          '';
+            [upstream documentation](https://docs.nextcloud.com/server/22/admin_manual/configuration_files/primary_storage.html).
+          '');
           bucket = mkOption {
             type = types.str;
             example = "nextcloud";
@@ -470,13 +470,13 @@ in {
       };
     };
 
-    enableImagemagick = mkEnableOption ''
+    enableImagemagick = mkEnableOption (lib.mdDoc ''
         the ImageMagick module for PHP.
         This is used by the theming app and for generating previews of certain images (e.g. SVG and HEIF).
         You may want to disable it for increased security. In that case, previews will still be available
         for some images (e.g. JPEG and PNG).
-        See <link xlink:href="https://github.com/nextcloud/server/issues/13099"/>.
-    '' // {
+        See <https://github.com/nextcloud/server/issues/13099>.
+    '') // {
       default = true;
     };
 
@@ -519,39 +519,37 @@ in {
         type = with types; either str (listOf str);
         default = "05:00:00";
         example = "Sun 14:00:00";
-        description = ''
-          When to run the update. See `systemd.services.&lt;name&gt;.startAt`.
+        description = lib.mdDoc ''
+          When to run the update. See `systemd.services.<name>.startAt`.
         '';
       };
     };
     occ = mkOption {
       type = types.package;
       default = occ;
-      defaultText = literalDocBook "generated script";
+      defaultText = literalMD "generated script";
       internal = true;
-      description = ''
+      description = lib.mdDoc ''
         The nextcloud-occ program preconfigured to target this Nextcloud instance.
       '';
     };
-    globalProfiles = mkEnableOption "global profiles" // {
-      description = ''
-        Makes user-profiles globally available under <literal>nextcloud.tld/u/user.name</literal>.
+    globalProfiles = mkEnableOption (lib.mdDoc "global profiles") // {
+      description = lib.mdDoc ''
+        Makes user-profiles globally available under `nextcloud.tld/u/user.name`.
         Even though it's enabled by default in Nextcloud, it must be explicitly enabled
         here because it has the side-effect that personal information is even accessible to
         unauthenticated users by default.
 
         By default, the following properties are set to “Show to everyone”
         if this flag is enabled:
-        <itemizedlist>
-        <listitem><para>About</para></listitem>
-        <listitem><para>Full name</para></listitem>
-        <listitem><para>Headline</para></listitem>
-        <listitem><para>Organisation</para></listitem>
-        <listitem><para>Profile picture</para></listitem>
-        <listitem><para>Role</para></listitem>
-        <listitem><para>Twitter</para></listitem>
-        <listitem><para>Website</para></listitem>
-        </itemizedlist>
+        - About
+        - Full name
+        - Headline
+        - Organisation
+        - Profile picture
+        - Role
+        - Twitter
+        - Website
 
         Only has an effect in Nextcloud 23 and later.
       '';
@@ -639,10 +637,9 @@ in {
           Using config.services.nextcloud.poolConfig is deprecated and will become unsupported in a future release.
           Please migrate your configuration to config.services.nextcloud.poolSettings.
         '')
-        ++ (optional (versionOlder cfg.package.version "21") (upgradeWarning 20 "21.05"))
-        ++ (optional (versionOlder cfg.package.version "22") (upgradeWarning 21 "21.11"))
         ++ (optional (versionOlder cfg.package.version "23") (upgradeWarning 22 "22.05"))
         ++ (optional (versionOlder cfg.package.version "24") (upgradeWarning 23 "22.05"))
+        ++ (optional (versionOlder cfg.package.version "25") (upgradeWarning 24 "22.11"))
         ++ (optional isUnsupportedMariadb ''
             You seem to be using MariaDB at an unsupported version (i.e. at least 10.6)!
             Please note that this isn't supported officially by Nextcloud. You can either
@@ -663,19 +660,13 @@ in {
               nextcloud defined in an overlay, please set `services.nextcloud.package` to
               `pkgs.nextcloud`.
             ''
-          else if versionOlder stateVersion "22.05" then nextcloud22
-          else nextcloud24
+          else if versionOlder stateVersion "22.11" then nextcloud24
+          else nextcloud25
         );
 
       services.nextcloud.phpPackage =
         if versionOlder cfg.package.version "24" then pkgs.php80
-        # FIXME: Use PHP 8.1 with Nextcloud 24 and higher, once issues like this one are fixed:
-        #
-        # https://github.com/nextcloud/twofactor_totp/issues/1192
-        #
-        # else if versionOlder cfg.package.version "24" then pkgs.php80
-        # else pkgs.php81;
-        else pkgs.php80;
+        else pkgs.php81;
     }
 
     { assertions = [

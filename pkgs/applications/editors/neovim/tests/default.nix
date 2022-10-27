@@ -1,3 +1,4 @@
+# run tests by building `neovim.tests`
 { vimUtils, vim_configurable, writeText, neovim, vimPlugins
 , lib, fetchFromGitHub, neovimUtils, wrapNeovimUnstable
 , neovim-unwrapped
@@ -6,7 +7,6 @@
 , pkgs
 }:
 let
-  inherit (vimUtils) buildVimPluginFrom2Nix;
   inherit (neovimUtils) makeNeovimConfig;
 
   packages.myVimPackage.start = with vimPlugins; [ vim-nix ];
@@ -65,6 +65,15 @@ let
     rev = "d2cc8c1042b1c2511f68f40e2790a8c0e29eeb42";
     sha256 = "1ykcvyx82nhdq167kbnpgwkgjib8ii7c92y3427v986n2s5lsskc";
   };
+
+  # this plugin checks that it's ftplugin/vim.tex is loaded before $VIMRUNTIME/ftplugin/vim.tex
+  # the answer is store in `plugin_was_loaded_too_late` in the cwd
+  texFtplugin = (pkgs.runCommandLocal "tex-ftplugin" {} ''
+    mkdir -p $out/ftplugin
+    echo 'call system("echo ". exists("b:did_ftplugin") . " > plugin_was_loaded_too_late")' > $out/ftplugin/tex.vim
+    echo ':q!' >> $out/ftplugin/tex.vim
+    echo '\documentclass{article}' > $out/main.tex
+  '') // { pname = "test-ftplugin"; };
 
   # neovim-drv must be a wrapped neovim
   runTest = neovim-drv: buildCommand:
@@ -126,6 +135,25 @@ rec {
   run_nvim_with_plug = runTest nvim_with_plug ''
     export HOME=$TMPDIR
     ${nvim_with_plug}/bin/nvim -i NONE -c 'color base16-tomorrow-night'  +quit! -e
+  '';
+
+  nvim_with_ftplugin = neovim.override {
+    extraName = "-with-ftplugin";
+    configure.packages.plugins = {
+      start = [
+        texFtplugin
+      ];
+    };
+  };
+
+  # regression test that ftplugin files from plugins are loaded before the ftplugin
+  # files from $VIMRUNTIME
+  run_nvim_with_ftplugin = runTest nvim_with_ftplugin ''
+    export HOME=$TMPDIR
+    ${nvim_with_ftplugin}/bin/nvim ${texFtplugin}/main.tex
+    result="$(cat plugin_was_loaded_too_late)"
+    echo $result
+    [ "$result" = 0 ]
   '';
 
 
@@ -192,5 +220,45 @@ rec {
   nvim_with_lua_packages = runTest nvimWithLuaPackages ''
     export HOME=$TMPDIR
     ${nvimWithLuaPackages}/bin/nvim -i NONE --noplugin -es
+  '';
+
+  # nixpkgs should install optional packages in the opt folder
+  nvim_with_opt_plugin = neovim.override {
+    extraName = "-with-opt-plugin";
+    configure.packages.opt-plugins = with pkgs.vimPlugins; {
+      opt = [
+        (dashboard-nvim.overrideAttrs(old: { pname = old.pname + "-unique-for-tests-please-dont-use-opt"; }))
+      ];
+    };
+    configure.customRC = ''
+      " Load all autoloaded plugins
+      packloadall
+
+      " Try to run Dashboard, and throw if it succeeds
+      try
+        Dashboard
+        echo "Dashboard found, throwing error"
+        cquit 1
+      catch /^Vim\%((\a\+)\)\=:E492/
+        echo "Dashboard not found"
+      endtry
+
+      " Load Dashboard as an optional
+      packadd dashboard-nvim-unique-for-tests-please-dont-use-opt
+
+      " Try to run Dashboard again, and throw if it fails
+      try
+        Dashboard
+        echo "Dashboard found"
+      catch /^Vim\%((\a\+)\)\=:E492/
+        echo "Dashboard not found, throwing error"
+        cquit 1
+      endtry
+    '';
+  };
+
+  run_nvim_with_opt_plugin = runTest nvim_with_opt_plugin ''
+    export HOME=$TMPDIR
+    ${nvim_with_opt_plugin}/bin/nvim -i NONE +quit! -e
   '';
 })
