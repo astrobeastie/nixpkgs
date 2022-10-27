@@ -55,6 +55,11 @@ let
     check = builtins.isAttrs;
   };
 
+  # Whether `pkgs` was constructed by this module - not if nixpkgs.pkgs or
+  # _module.args.pkgs is set. However, determining whether _module.args.pkgs
+  # is defined elsewhere does not seem feasible.
+  constructedByMe = !opt.pkgs.isDefined;
+
   hasBuildPlatform = opt.buildPlatform.highestPrio < (mkOptionDefault {}).priority;
   hasHostPlatform = opt.hostPlatform.isDefined;
   hasPlatform = hasHostPlatform || hasBuildPlatform;
@@ -311,33 +316,33 @@ in
       defaultText = lib.literalMD ''
         Traditionally `builtins.currentSystem`, but unset when invoking NixOS through `lib.nixosSystem`.
       '';
-      description = ''
+      description = lib.mdDoc ''
         This option does not need to be specified for NixOS configurations
-        with a recently generated <literal>hardware-configuration.nix</literal>.
+        with a recently generated `hardware-configuration.nix`.
 
         Specifies the Nix platform type on which NixOS should be built.
-        It is better to specify <literal>nixpkgs.localSystem</literal> instead.
-        <programlisting>
+        It is better to specify `nixpkgs.localSystem` instead.
+        ```
         {
           nixpkgs.system = ..;
         }
-        </programlisting>
+        ```
         is the same as
-        <programlisting>
+        ```
         {
           nixpkgs.localSystem.system = ..;
         }
-        </programlisting>
-        See <literal>nixpkgs.localSystem</literal> for more information.
+        ```
+        See `nixpkgs.localSystem` for more information.
 
-        Ignored when <literal>nixpkgs.pkgs</literal>, <literal>nixpkgs.localSystem</literal> or <literal>nixpkgs.hostPlatform</literal> is set.
+        Ignored when `nixpkgs.pkgs`, `nixpkgs.localSystem` or `nixpkgs.hostPlatform` is set.
       '';
     };
   };
 
   config = {
     _module.args = {
-      pkgs = finalPkgs;
+      pkgs = finalPkgs.__splicedPackages;
     };
 
     assertions = [
@@ -353,12 +358,12 @@ in
             else "nixpkgs.localSystem";
           pkgsSystem = finalPkgs.stdenv.targetPlatform.system;
         in {
-          assertion = !hasPlatform -> nixosExpectedSystem == pkgsSystem;
+          assertion = constructedByMe -> !hasPlatform -> nixosExpectedSystem == pkgsSystem;
           message = "The NixOS nixpkgs.pkgs option was set to a Nixpkgs invocation that compiles to target system ${pkgsSystem} but NixOS was configured for system ${nixosExpectedSystem} via NixOS option ${nixosOption}. The NixOS system settings must match the Nixpkgs target system.";
         }
       )
       {
-        assertion = hasPlatform -> legacyOptionsDefined == [];
+        assertion = constructedByMe -> hasPlatform -> legacyOptionsDefined == [];
         message = ''
           Your system configures nixpkgs with the platform parameter${optionalString hasBuildPlatform "s"}:
           ${hostPlatformLine

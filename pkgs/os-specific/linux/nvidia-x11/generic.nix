@@ -15,6 +15,7 @@
 , prePatch ? ""
 , patches ? []
 , broken ? false
+, brokenOpen ? broken
 }@args:
 
 { lib, stdenv, callPackage, pkgs, pkgsi686Linux, fetchurl
@@ -100,12 +101,13 @@ let
     nativeBuildInputs = [ perl nukeReferences ]
       ++ optionals (!libsOnly) kernel.moduleBuildDependencies;
 
-    disallowedReferences = optional (!libsOnly) [ kernel.dev ];
+    disallowedReferences = optionals (!libsOnly) [ kernel.dev ];
 
     passthru = {
       open = mapNullable (hash: callPackage ./open.nix {
-        inherit hash broken;
+        inherit hash;
         nvidia_x11 = self;
+        broken = brokenOpen;
       }) openSha256;
       settings = (if settings32Bit then pkgsi686Linux.callPackage else callPackage) (import ./settings.nix self settingsSha256) {
         withGtk2 = preferGtk2;
@@ -113,6 +115,7 @@ let
       };
       persistenced = mapNullable (hash: callPackage (import ./persistenced.nix self hash) { }) persistencedSha256;
       inherit persistencedVersion settingsVersion;
+      compressFirmware = false;
     } // optionalAttrs (!i686bundled) {
       inherit lib32;
     };

@@ -175,7 +175,9 @@ in (kdeFrameworks // plasmaMobileGear // plasma5 // plasma5.thirdParty // kdeGea
   qca-qt5 = callPackage ../development/libraries/qca-qt5 { };
 
   # Until macOS SDK allows for Qt 5.15, darwin is limited to 2.3.2
-  qca-qt5_2_3_2 = callPackage ../development/libraries/qca-qt5/2.3.2.nix { };
+  qca-qt5_2_3_2 = callPackage ../development/libraries/qca-qt5/2.3.2.nix {
+    openssl = pkgs.openssl_1_1;
+  };
 
   qcoro = callPackage ../development/libraries/qcoro { };
 
@@ -194,6 +196,8 @@ in (kdeFrameworks // plasmaMobileGear // plasma5 // plasma5.thirdParty // kdeGea
   qscintilla = callPackage ../development/libraries/qscintilla { };
 
   qt5ct = callPackage ../tools/misc/qt5ct { };
+
+  qtdbusextended = callPackage ../development/libraries/qtdbusextended { };
 
   qtfeedback = callPackage ../development/libraries/qtfeedback { };
 

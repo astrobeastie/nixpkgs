@@ -11,10 +11,10 @@
 }:
 
 let
-  sha256 = "1fv53wikx745kci86xrsq9kfsgv0a65srhywdw32cab1wywwpn2z";
+  sha256 = "1xwfbfh25kwbv8q24mcxdv0h4iya5r56cc8d6d1ihp92i1k7ggk9";
   # specVersion taken from: https://www.linode.com/docs/api/openapi.yaml at `info.version`.
-  specVersion = "4.132.0";
-  specSha256 = "0r0l23bvaj406xam7hglfx637cxja3g2vqdqx3x0ag7jfhg0s3k5";
+  specVersion = "4.138.0";
+  specSha256 = "0gcfnrgp18r49pvpi5s7x8vmz7jmps99pqhq3maad3xcrryjjrj4";
   spec = fetchurl {
     url = "https://raw.githubusercontent.com/linode/linode-api-docs/v${specVersion}/openapi.yaml";
     sha256 = specSha256;
@@ -24,7 +24,7 @@ in
 
 buildPythonApplication rec {
   pname = "linode-cli";
-  version = "5.22.0";
+  version = "5.24.0";
 
   src = fetchFromGitHub {
     owner = "linode";

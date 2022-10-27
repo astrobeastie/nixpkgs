@@ -223,7 +223,6 @@ echo $JAVA_HOME
     in symlinkJoin {
       name = "isabelle-with-components-${isabelle-emacs.version}";
       paths = [ isabelle-emacs ] ++ components;
-
       postBuild = ''
         rm $out/bin/*
 

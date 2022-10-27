@@ -26,10 +26,10 @@ in
     services.pantheon = {
 
       contractor = {
-         enable = mkEnableOption "contractor, a desktop-wide extension service used by Pantheon";
+         enable = mkEnableOption (lib.mdDoc "contractor, a desktop-wide extension service used by Pantheon");
       };
 
-      apps.enable = mkEnableOption "Pantheon default applications";
+      apps.enable = mkEnableOption (lib.mdDoc "Pantheon default applications");
 
     };
 
@@ -76,7 +76,7 @@ in
         description = lib.mdDoc "List of packages for which gsettings are overridden.";
       };
 
-      debug = mkEnableOption "gnome-session debug messages";
+      debug = mkEnableOption (lib.mdDoc "gnome-session debug messages");
 
     };
 
@@ -285,7 +285,7 @@ in
         elementary-music
         elementary-photos
         elementary-screenshot
-        elementary-tasks
+        # elementary-tasks
         elementary-terminal
         elementary-videos
         epiphany

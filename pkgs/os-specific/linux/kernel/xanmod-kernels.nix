@@ -3,15 +3,21 @@
 let
   # These names are how they are designated in https://xanmod.org.
   ltsVariant = {
-    version = "5.15.60";
-    hash = "sha256-XSOYgrJ/uvPpEG+P3Zy1geFeF/HMZ4LejsKWtTxMUTs=";
+    version = "5.15.70";
+    hash = "sha256-gMtGoj/HzMqd6Y3PSc6QTsu/PI7vfb+1pg4mt878cxs=";
     variant = "lts";
   };
 
-  edgeVariant = {
-    version = "5.19.1";
-    hash = "sha256-Fw+XW2YDAGKEzZ4AO88Y8GcypfOb6AjKp3XOlkT8ZTQ=";
-    variant = "edge";
+  currentVariant = {
+    version = "5.19.13";
+    hash = "sha256-BzQH4c24CtE3R5HNe2sOc3McVkRmf/RKOOjuf1W4YfE=";
+    variant = "current";
+  };
+
+  nextVariant = {
+    version = "6.0.0";
+    hash = "sha256-E7T8eHwMKYShv4KWdCbHQmpn+54edJoKdimZY3GFbPU=";
+    variant = "next";
   };
 
   ttVariant = {
@@ -36,11 +42,6 @@ let
       # AMD P-state driver
       X86_AMD_PSTATE = yes;
 
-      # Paragon's NTFS3 driver
-      NTFS3_FS = module;
-      NTFS3_LZX_XPRESS = yes;
-      NTFS3_FS_POSIX_ACL = yes;
-
       # Google's BBRv2 TCP congestion Control
       TCP_CONG_BBR2 = yes;
       DEFAULT_BBR2 = yes;
@@ -48,9 +49,6 @@ let
       # FQ-PIE Packet Scheduling
       NET_SCH_DEFAULT = yes;
       DEFAULT_FQ_PIE = yes;
-
-      # Graysky's additional CPU optimizations
-      CC_OPTIMIZE_FOR_PERFORMANCE_O3 = yes;
 
       # Futex WAIT_MULTIPLE implementation for Wine / Proton Fsync.
       FUTEX = yes;
@@ -76,6 +74,7 @@ let
 in
 {
   lts = xanmodKernelFor ltsVariant;
-  edge = xanmodKernelFor edgeVariant;
+  current = xanmodKernelFor currentVariant;
+  next = xanmodKernelFor nextVariant;
   tt = xanmodKernelFor ttVariant;
 }

@@ -1,11 +1,11 @@
 { lib
-, buildLuarocksPackage
 , callPackage
 , vimUtils
 , nodejs
 , neovim-unwrapped
 , bundlerEnv
 , ruby
+, lua
 , python3Packages
 , writeText
 , wrapNeovimUnstable
@@ -106,6 +106,7 @@ let
           flags = [
             "--cmd" (lib.intersperse "|" hostProviderViml)
             "--cmd" "set packpath^=${vimUtils.packDir packDirArgs}"
+            "--cmd" "set rtp^=${vimUtils.packDir packDirArgs}"
             ];
         in
         [
@@ -115,8 +116,8 @@ let
         ] ++ lib.optionals (binPath != "") [
           "--suffix" "PATH" ":" binPath
         ] ++ lib.optionals (luaEnv != null) [
-          "--prefix" "LUA_PATH" ";" (neovim-unwrapped.lua.pkgs.lib.genLuaPathAbsStr luaEnv)
-          "--prefix" "LUA_CPATH" ";" (neovim-unwrapped.lua.pkgs.lib.genLuaCPathAbsStr luaEnv)
+          "--prefix" "LUA_PATH" ";" (neovim-unwrapped.lua.pkgs.luaLib.genLuaPathAbsStr luaEnv)
+          "--prefix" "LUA_CPATH" ";" (neovim-unwrapped.lua.pkgs.luaLib.genLuaCPathAbsStr luaEnv)
         ];
 
       manifestRc = vimUtils.vimrcContent ({ customRC = ""; }) ;
@@ -169,8 +170,8 @@ let
           throw "The neovim legacy wrapper doesn't support configure.plug anymore, please setup your plugins via 'configure.packages' instead"
         else
           lib.flatten (lib.mapAttrsToList genPlugin (configure.packages or {}));
-      genPlugin = packageName: {start ? [], opt?[]}:
-        start ++ opt;
+      genPlugin = packageName: {start ? [], opt ? []}:
+        start ++ (map (p: { plugin = p; optional = true; }) opt);
 
       res = makeNeovimConfig {
         inherit withPython3;
@@ -192,7 +193,7 @@ in
   inherit legacyWrapper;
 
   buildNeovimPluginFrom2Nix = callPackage ./build-neovim-plugin.nix {
-    inherit (vimUtils) buildVimPluginFrom2Nix toVimPlugin;
-    inherit buildLuarocksPackage;
+    inherit (vimUtils) toVimPlugin;
+    inherit lua;
   };
 }

@@ -3,6 +3,7 @@
 , fetchFromGitHub
 , bash
 , cmake
+, colordiff
 , flex
 , libclang
 , llvm
@@ -15,13 +16,14 @@
 
 buildPythonApplication rec {
   pname = "cvise";
-  version = "2.4.0";
+  version = "2.6.0";
+  format = "other";
 
   src = fetchFromGitHub {
     owner = "marxin";
     repo = "cvise";
-    rev = "v${version}";
-    sha256 = "0cfzikkhp91hjgxjk3izzczb8d9p8v9zsfyk6iklk92n5qf1aakq";
+    rev = "refs/tags/v${version}";
+    sha256 = "sha256-yREdWrGiH8Bb2bIxvlg4okGbkIM5XqC039Fj0rrsJos=";
   };
 
   patches = [
@@ -34,8 +36,9 @@ buildPythonApplication rec {
     substituteInPlace cvise.py \
       --replace "#!/bin/bash" "#!${bash}/bin/bash"
 
-    substituteInPlace setup.cfg \
-      --replace "--flake8" ""
+    substituteInPlace cvise/utils/testing.py \
+      --replace "'colordiff --version'" "'${colordiff}/bin/colordiff --version'" \
+      --replace "'colordiff'" "'${colordiff}/bin/colordiff'"
   '';
 
   nativeBuildInputs = [
@@ -62,18 +65,10 @@ buildPythonApplication rec {
     unifdef
   ];
 
-  preCheck = ''
-    patchShebangs cvise.py
-  '';
-
   disabledTests = [
     # Needs gcc, fails when run noninteractively (without tty).
     "test_simple_reduction"
   ];
-
-  dontUsePipInstall = true;
-  dontUseSetuptoolsBuild = true;
-  dontUseSetuptoolsCheck = true;
 
   meta = with lib; {
     homepage = "https://github.com/marxin/cvise";

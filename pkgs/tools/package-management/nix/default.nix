@@ -1,7 +1,6 @@
 { lib
 , aws-sdk-cpp
 , boehmgc
-, curl
 , callPackage
 , fetchFromGitHub
 , fetchurl
@@ -32,7 +31,7 @@ let
 
   common = args:
     callPackage
-      (import ./common.nix ({ inherit lib fetchFromGitHub curl; } // args))
+      (import ./common.nix ({ inherit lib fetchFromGitHub; } // args))
       {
         inherit Security storeDir stateDir confDir;
         boehmgc = boehmgc-nix;
@@ -84,7 +83,13 @@ in lib.makeExtensible (self: {
     patches = [ ./patches/flaky-tests.patch ];
   };
 
-  stable = self.nix_2_10;
+  nix_2_11 = common {
+    version = "2.11.0";
+    sha256 = "sha256-9+rpYzI+SmxJn+EbYxjGv68Ucp22bdFUSy/4LkHkkDQ=";
+    patches = [ ./patches/flaky-tests.patch ];
+  };
+
+  stable = self.nix_2_11;
 
   unstable = self.stable;
 })
