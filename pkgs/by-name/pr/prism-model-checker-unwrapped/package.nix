@@ -1,4 +1,10 @@
-{ lib, stdenv, coreutils, fetchFromGitHub, java }:
+{
+  lib,
+  stdenv,
+  coreutils,
+  fetchFromGitHub,
+  java,
+}:
 stdenv.mkDerivation rec {
   pname = "prism-model-checker-unwrapped";
   version = "4.8.1";
@@ -12,16 +18,16 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-igFRIjPfx0BFpQjaW/vgMEnH2HLC06aL3IMHh+ELB6U=";
   };
 
-  nativeBuildInputs = [java];
+  nativeBuildInputs = [ java ];
 
   postPatch = ''
     sed -i "s/\/bin\/mv/mv/" prism/install.sh
-    '';
+  '';
 
-  makeFlags = ["JAVA_DIR=${java}"];
+  makeFlags = [ "JAVA_DIR=${java}" ];
   preBuild = ''
     cd prism
-    '';
+  '';
 
   installPhase = ''
     mkdir --parents $out
@@ -37,7 +43,7 @@ stdenv.mkDerivation rec {
     cd $out
     ./install.sh
     rm install.sh
-    '';
+  '';
 
   meta = with lib; {
     description = "A Probabalistic Symbolic Model Checker";
@@ -48,4 +54,3 @@ stdenv.mkDerivation rec {
     platforms = platforms.unix;
   };
 }
-

@@ -667,6 +667,13 @@ with pkgs;
 
   buildcatrust = with python3.pkgs; toPythonApplication buildcatrust;
 
+  prism-model-checker-unwrapped = callPackage ../by-name/pr/prism-model-checker-unwrapped/package.nix {
+      java = openjdk17;
+      # makefile hardcodes gcc for darwin
+      stdenv = if stdenv.isDarwin then gccStdenv else stdenv;
+  };
+  prism-model-checker = callPackage ../by-name/pr/prism-model-checker/package.nix {java = openjdk17;};
+
   probe-rs-tools = callPackage ../by-name/pr/probe-rs-tools/package.nix {
     inherit (darwin.apple_sdk.frameworks) AppKit;
     inherit (darwin) DarwinTools;
@@ -36450,14 +36457,6 @@ with pkgs;
   picosat = callPackage ../applications/science/logic/picosat { };
 
   libpoly = callPackage ../applications/science/logic/poly { };
-
-  prism-model-checker-unwrapped = callPackage ../applications/science/logic/prism-model-checker {
-      java = openjdk17;
-
-    # makefile hardcodes gcc for darwin
-    stdenv = if stdenv.isDarwin then gccStdenv else stdenv;
-  };
-  prism-model-checker = callPackage ../applications/science/logic/prism-model-checker/wrapper.nix {java = openjdk17;};
 
   prooftree = callPackage  ../applications/science/logic/prooftree {
     ocamlPackages = ocaml-ng.ocamlPackages_4_12;
