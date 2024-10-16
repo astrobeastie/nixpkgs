@@ -4,6 +4,7 @@
   coreutils,
   fetchFromGitHub,
   java,
+  libtool,
 }:
 stdenv.mkDerivation rec {
   pname = "prism-model-checker-unwrapped";
@@ -18,7 +19,7 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-igFRIjPfx0BFpQjaW/vgMEnH2HLC06aL3IMHh+ELB6U=";
   };
 
-  nativeBuildInputs = [ java ];
+  nativeBuildInputs = [ java ] ++ lib.optionals stdenv.hostPlatform.isDarwin [ libtool ];
 
   postPatch = ''
     sed -i "s/\/bin\/mv/mv/" prism/install.sh
